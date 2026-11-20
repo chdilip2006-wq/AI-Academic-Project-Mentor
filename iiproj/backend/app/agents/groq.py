@@ -242,34 +242,40 @@ def _string(value):
 
 
 def _normalize_technology_output(result):
-    """Coerce common singleton/scalar category shapes into the documented list schema."""
+    """Coerce common scalar, alias, and singleton shapes into the recommendation schema."""
     if not isinstance(result, dict):
         return result
     categories = ("frontend", "backend", "database", "aiMl", "developmentTools", "recommendations")
     for category in categories:
         if category not in result:
             continue
-        value = result.get(category)
-        if value is None:
+        raw = result[category]
+        if raw is None:
             result[category] = []
-        elif isinstance(value, str):
-            result[category] = [{"name": value.strip(), "reasoning": "Selected to fit the project requirements."}] if value.strip() else []
-        elif isinstance(value, dict):
-            if _string(value.get("name")):
-                value.setdefault("reasoning", "Selected to fit the project requirements.")
-                result[category] = [value]
+            continue
+        values = raw if isinstance(raw, list) else [raw]
+        normalized = []
+        for item in values:
+            if isinstance(item, str):
+                name, reasoning = item.strip(), "Selected to fit the project requirements."
+            elif isinstance(item, dict):
+                name = next((item[key].strip() for key in ("name", "technology", "tool", "framework", "language", "platform") if _string(item.get(key))), "")
+                reasoning = next((item[key].strip() for key in ("reasoning", "reason", "rationale", "why", "description", "justification") if _string(item.get(key))), "Selected to fit the project requirements.")
+                if not name:
+                    scalar_items = [(str(key), value) for key, value in item.items() if isinstance(value, str) and _string(value)]
+                    if scalar_items:
+                        name, reasoning = scalar_items[0][0], scalar_items[0][1]
+                    else:
+                        nested_name = next((str(key) for key, value in item.items() if isinstance(value, dict)), "")
+                        nested = item.get(nested_name) if nested_name else None
+                        name = nested_name
+                        if isinstance(nested, dict):
+                            reasoning = next((nested[key].strip() for key in ("reasoning", "reason", "rationale", "why", "description") if _string(nested.get(key))), reasoning)
             else:
-                result[category] = [
-                    {"name": str(name), "reasoning": str(reason)}
-                    for name, reason in value.items()
-                    if _string(str(name)) and _string(str(reason))
-                ]
-        elif isinstance(value, list):
-            result[category] = [
-                {"name": item.strip(), "reasoning": "Selected to fit the project requirements."}
-                if isinstance(item, str) else item
-                for item in value
-            ]
+                name, reasoning = "", ""
+            if _string(name):
+                normalized.append({"name": name, "reasoning": reasoning if _string(reasoning) else "Selected to fit the project requirements."})
+        result[category] = normalized
     return result
 
 

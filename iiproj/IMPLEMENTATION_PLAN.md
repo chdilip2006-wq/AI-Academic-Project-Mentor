@@ -28,6 +28,6 @@ Use backend pytest with mocked MongoDB-compatible data and mocked AI responses, 
 - `AI_MOCK_MODE=true` runs deterministic fixtures without Groq; test suites use isolated databases and mocks only.
 
 ## Registration and role approval
-- Public registration always creates a student; optional faculty access requests are stored as `PENDING` and reviewed by an admin before a role is changed to faculty.
+- Public registration creates a student only after required academic details and at least one named skill with a proficiency level are supplied; programming languages and prior experience are optional. Faculty access requests are stored as `PENDING` and reviewed by an admin before the role changes to faculty.
 - Direct faculty role assignment is blocked. Existing admins can promote another account to admin, while self-role changes are rejected.
 - `backend/create_admin.py` is a one-time, trusted-shell first-admin bootstrap with an atomic MongoDB bootstrap lock; subsequent admin access is granted by an authenticated admin.

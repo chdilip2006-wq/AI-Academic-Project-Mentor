@@ -20,7 +20,8 @@ def client(extra_config=None):
 
 
 def register(client, email="student@university.edu", **extra):
-    return client.post("/api/auth/register", json={"name": "Student One", "email": email, "password": "safe-password-123", **extra})
+    profile = {"rollNumber": "S-102", "department": "Computer Science", "program": "B.Tech", "year": 2, "bio": "Interested in building useful software.", "interests": "AI and education", "skills": [{"name": "Python", "level": "Intermediate"}], "programmingLanguages": ["Python"]}
+    return client.post("/api/auth/register", json={"name": "Student One", "email": email, "password": "safe-password-123", "profile": profile, **extra})
 
 
 def auth(token): return {"Authorization": f"Bearer {token}"}

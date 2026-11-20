@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/node_modules/
+frontend/dist/
+*.py[cod]
+**/*service-account*.json
+*.pem
+*.key
+*.log
+**/local_uploads/
+**/generated/
+*.tmp
+coverage.xml

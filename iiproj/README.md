@@ -12,7 +12,7 @@ A React and Flask workspace for academic project planning, mentoring, milestones
 - AI: Groq-backed five-agent planning pipeline (Feasibility, Scope, Technology, Milestones, and Risk), plus conversational mentor
 - Deployment: Vercel frontend and Render backend
 
-The browser keeps the access token in `sessionStorage` for the current tab session. The API loads the user and role from MongoDB on each protected request. Public registration creates student accounts only. New users can request faculty access; an administrator must approve the pending request before the account receives faculty permissions. Bootstrap the first admin once through the trusted-shell `backend/create_admin.py` utility. Existing admins can grant additional admin access to another account from role management; self-role changes are blocked.
+The browser keeps the access token in `sessionStorage` for the current tab session. The API loads the user and role from MongoDB on each protected request. Public registration creates a student account only after required academic details and at least one named skill with a proficiency level are supplied. Programming languages, prior experience, and GitHub are optional. New users can request faculty access; an administrator must approve the pending request before the account receives faculty permissions. Bootstrap the first admin once through the trusted-shell `backend/create_admin.py` utility. Existing admins can grant additional admin access to another account from role management; self-role changes are blocked.
 
 ## Folder structure
 
