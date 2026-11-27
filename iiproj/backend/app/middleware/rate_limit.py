@@ -1,5 +1,6 @@
 from collections import defaultdict, deque
 from functools import wraps
+from typing import Any, Callable
 import threading
 import time
 from flask import current_app, jsonify, request
@@ -8,7 +9,7 @@ _lock = threading.Lock()
 _requests = defaultdict(deque)
 
 
-def rate_limit(max_requests, window_seconds):
+def rate_limit(max_requests: int, window_seconds: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     def decorate(view):
         @wraps(view)
         def wrapped(*args, **kwargs):

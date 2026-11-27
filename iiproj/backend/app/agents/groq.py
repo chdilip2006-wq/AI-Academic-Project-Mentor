@@ -2,6 +2,7 @@ import json
 import logging
 import threading
 import time
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from flask import current_app
@@ -11,9 +12,9 @@ from ..services.store import now
 logger = logging.getLogger(__name__)
 
 AGENT_PROMPTS = [
-    ("feasibility", "You are an academic project feasibility analyst. Assess the submitted idea's problem, technical feasibility, complexity, resources, likely time requirements, difficulty, and challenges. Return JSON with keys problemStatement, technicalFeasibility, complexity, requiredResources (array), timeEstimateWeeks (integer), expectedDifficulty, challenges (array), assumptions (array). Be honest about uncertainty and keep the estimate realistic for a student project."),
+    ("feasibility", "You are an academic project feasibility analyst. Assess the submitted idea's problem, technical feasibility, complexity, resources, likely time requirements, difficulty, and challenges. Use the student's self-reported skills and any skill assessment signals to calibrate the plan, but treat a short multiple-choice assessment as an imperfect signal rather than proof of ability. Return JSON with keys problemStatement, technicalFeasibility, complexity, requiredResources (array), timeEstimateWeeks (integer), expectedDifficulty, challenges (array), assumptions (array). Be honest about uncertainty and keep the estimate realistic for a student project."),
     ("scope", "You are an academic project scope analyst. Use the idea and feasibility context. Return JSON with keys title, problemStatement, objectives (array), functionalRequirements (array), nonFunctionalRequirements (array), coreFeatures (array), boundaries (array), expectedOutcomes (array). Keep scope achievable."),
-    ("technology", "You are a technology advisor. Use profile, idea, feasibility and scope context. Recommend technologies specifically suited to this project and student's experience, not a generic default stack. Return one JSON object with keys frontend, backend, database, aiMl, developmentTools, recommendations. IMPORTANT: frontend, backend, database, aiMl, and developmentTools must each be arrays of objects. Every item must have exactly a string name and a string reasoning, for example: \"frontend\":[{\"name\":\"React\",\"reasoning\":\"Fits the interactive interface requirements.\"}]. Never return a category as a string or as a single object. Use an empty array only when no recommendation applies. The recommendations key must also be an array of {name, reasoning} objects."),
+    ("technology", "You are a technology advisor. Use profile, idea, feasibility and scope context. Recommend technologies specifically suited to this project and student's experience, not a generic default stack. Treat multiple-choice skill assessment signals as imperfect evidence, not certification, and use them to tailor learning support and stack complexity. Return one JSON object with keys frontend, backend, database, aiMl, developmentTools, recommendations. IMPORTANT: frontend, backend, database, aiMl, and developmentTools must each be arrays of objects. Every item must have exactly a string name and a string reasoning, for example: \"frontend\":[{\"name\":\"React\",\"reasoning\":\"Fits the interactive interface requirements.\"}]. Never return a category as a string or as a single object. Use an empty array only when no recommendation applies. The recommendations key must also be an array of {name, reasoning} objects."),
     ("milestones", "You are an academic project planner. Return JSON with keys estimatedWeeks (integer), milestones (array). Each milestone has week (integer), title (string), tasks (array of strings), deliverables (array of strings), dependencies (array of strings naming earlier milestone titles), completionCriteria (array of measurable strings), estimatedHours (integer). Every array must contain plain strings only; use [] when there are no dependencies. Do not return dependency objects, nulls, or a single string in place of an array. Provide a realistic week-wise plan."),
     ("risks", "You are a project risk analyst. Return JSON with keys risks (array). Each risk has category, description, severity (Low/Medium/High), probability (Low/Medium/High), mitigation. Include technical, time, resource and integration risks."),
 ]
@@ -392,7 +393,7 @@ def validate_agent_output(agent, result):
 
 def _profile_context(profile):
     profile = profile or {}
-    return {key: profile[key] for key in ("department", "year", "skills", "programmingLanguages", "interests", "previousProjectExperience") if profile.get(key)}
+    return {key: profile[key] for key in ("department", "year", "skills", "programmingLanguages", "interests", "previousProjectExperience", "skillAssessment") if profile.get(key)}
 
 
 def _technology_summary(technology):
@@ -420,7 +421,7 @@ def _input_for_agent(name, project, profile, results):
     return {**base, "feasibilitySummary": {key: feasibility[key] for key in ("timeEstimateWeeks", "complexity", "challenges")}, "scopeSummary": {key: scope[key] for key in ("title", "coreFeatures", "boundaries")}, "technologySummary": _technology_summary(technology), "milestoneSummary": _milestone_summary(milestones)}
 
 
-def _latest_for_agent(records, agent):
+def latest_for_agent(records: list[dict[str, Any]], agent: str) -> dict[str, Any] | None:
     items = [record for record in records if record.get("agent") == agent]
     if not items:
         return None
@@ -441,7 +442,7 @@ def run_planning(project_id, run_id, project, profile, start_index=0):
     results = {}
     for index, (name, prompt) in enumerate(AGENT_PROMPTS):
         if index < start_index:
-            prior = _latest_for_agent(records, name)
+            prior = latest_for_agent(records, name)
             if not prior or prior.get("status") != "completed" or not isinstance(prior.get("result"), dict):
                 raise AgentRunError(name, f"Completed {name} result is missing; restart planning from this agent.")
             results[name] = validate_agent_output(name, prior["result"])

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 from ..extensions import db
 from ..utils.errors import ApiError
 
@@ -7,7 +8,7 @@ def now():
     return datetime.now(timezone.utc)
 
 
-def project_for_user(project_id, user, write=False):
+def project_for_user(project_id: str, user: dict[str, Any], write: bool = False) -> tuple[Any, dict[str, Any]]:
     ref = db.collection("projects").document(project_id)
     snap = ref.get()
     if not snap.exists:
@@ -20,7 +21,7 @@ def project_for_user(project_id, user, write=False):
     return ref, project
 
 
-def serialize(doc):
+def serialize(doc: Any) -> dict[str, Any]:
     value = doc.to_dict() or {}
     value["id"] = doc.id
     for key, item in list(value.items()):

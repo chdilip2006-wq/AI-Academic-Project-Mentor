@@ -39,7 +39,8 @@ def _registration_profile(data):
         elif not isinstance(value, str):
             return None, f"Enter your {labels[key]}."
         value = str(value).strip()
-        if not value or len(value) > limits.get(key, 0):
+        maximum = limits.get(key)
+        if not value or (maximum is not None and len(value) > maximum):
             return None, f"Enter a valid {labels[key]}."
         cleaned[key] = value
     try:

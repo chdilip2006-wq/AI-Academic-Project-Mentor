@@ -1,18 +1,36 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BookOpen, Bot, ClipboardList, FileText, FolderKanban, LayoutDashboard, LogOut, Menu, UserRound, Users, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { api } from '../services/api'
 
 export default function AppLayout() {
   const { user, logout } = useAuth()
   const [open, setOpen] = useState(false)
+  const [profileCheck, setProfileCheck] = useState({ loading: true, error: '', profile: null })
   const location = useLocation()
+  useEffect(() => {
+    if (user?.role !== 'student') { setProfileCheck({ loading: false, error: '', profile: null }); return }
+    let active = true
+    setProfileCheck({ loading: true, error: '', profile: null })
+    api('/profile').then(result => { if (active) setProfileCheck({ loading: false, error: '', profile: result.profile }) })
+      .catch(error => { if (active) setProfileCheck({ loading: false, error: error.message, profile: null }) })
+    return () => { active = false }
+  }, [user?.uid, location.pathname])
+  useEffect(() => {
+    const assessmentCompleted = event => setProfileCheck(current => ({ ...current, profile: { ...(current.profile || {}), skillAssessment: event.detail } }))
+    window.addEventListener('skill-assessment-complete', assessmentCompleted)
+    return () => window.removeEventListener('skill-assessment-complete', assessmentCompleted)
+  }, [])
   const links = user?.role === 'faculty'
     ? [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }, { to: '/faculty', label: 'Assigned projects', icon: Users }]
     : user?.role === 'admin'
       ? [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }, { to: '/admin', label: 'User management', icon: Users }]
-      : [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }, { to: '/profile', label: 'My profile', icon: UserRound }, { to: '/projects/new', label: 'New project idea', icon: BookOpen }]
-  const title = location.pathname.includes('/mentor') ? 'AI Mentor' : location.pathname.includes('/documents') ? 'Documentation' : location.pathname.includes('/risks') ? 'Risk management' : location.pathname.includes('/projects/') ? 'Project workspace' : location.pathname === '/profile' ? 'My profile' : 'Workspace'
+      : [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }, { to: '/profile', label: 'My profile', icon: UserRound }, { to: '/skill-assessment', label: 'Skill assessment', icon: ClipboardList }, { to: '/projects/new', label: 'New project idea', icon: BookOpen }]
+  const title = location.pathname.includes('/skill-assessment') ? 'Skill assessment' : location.pathname.includes('/mentor') ? 'AI Mentor' : location.pathname.includes('/documents') ? 'Documentation' : location.pathname.includes('/risks') ? 'Risk management' : location.pathname.includes('/projects/') ? 'Project workspace' : location.pathname === '/profile' ? 'My profile' : 'Workspace'
+  if (user?.role === 'student' && profileCheck.loading) return <div className="screen-loading">Loading your profile…</div>
+  if (user?.role === 'student' && profileCheck.error) return <div className="screen-loading"><div><p>Could not load your profile: {profileCheck.error}</p><button className="button button-primary" onClick={() => window.location.reload()}>Retry</button></div></div>
+  if (user?.role === 'student' && !profileCheck.profile?.skillAssessment?.completedAt && location.pathname !== '/skill-assessment') return <Navigate to="/skill-assessment" replace />
   return <div className="app-shell">
     <button className="mobile-menu" onClick={() => setOpen(!open)} aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button>
     {open && <button className="sidebar-scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />}

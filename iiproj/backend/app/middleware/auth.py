@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 from functools import wraps
+from typing import Any, Callable
 import jwt
 from flask import current_app, g, request, jsonify
 from ..extensions import db
 
 
-def require_auth(*roles):
+def require_auth(*roles: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     def decorator(view):
         @wraps(view)
         def wrapped(*args, **kwargs):

@@ -7,7 +7,7 @@ from ..extensions import db
 from ..middleware.auth import require_auth
 from ..middleware.rate_limit import rate_limit
 from ..services.store import now, project_for_user, serialize
-from ..agents.groq import AGENT_NAMES, AgentRunError, _latest_for_agent, generate_json, friendly_failure, planning_lock, run_planning
+from ..agents.groq import AGENT_NAMES, AgentRunError, latest_for_agent, generate_json, friendly_failure, planning_lock, run_planning
 
 bp = Blueprint("planning", __name__)
 
@@ -35,7 +35,7 @@ def serialized_project_run(view):
 
 def _latest_records(project_id, run_id):
     records = [item.to_dict() or {} for item in db.collection("agentResults").where("projectId", "==", project_id).where("runId", "==", run_id).stream()]
-    return {name: _latest_for_agent(records, name) for name in AGENT_NAMES}
+    return {name: latest_for_agent(records, name) for name in AGENT_NAMES}
 
 
 def _finish_plan(ref, project_id, project, results, blueprint):

@@ -13,6 +13,7 @@ import Admin from './pages/Admin'
 import FacultyProject from './pages/FacultyProject'
 import PlanAdjustments from './pages/PlanAdjustments'
 import Risks from './pages/Risks'
+import SkillAssessment from './pages/SkillAssessment'
 import { useAuth } from './contexts/AuthContext'
 
 function Home() {
@@ -22,5 +23,5 @@ function Home() {
   return <Dashboard />
 }
 export default function App() {
-  return <Routes><Route path="/login" element={<Login />} /><Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}><Route index element={<Home />} /><Route path="profile" element={<Profile />} /><Route path="projects/new" element={<NewProject />} /><Route path="projects/:id" element={<Project />} /><Route path="projects/:id/mentor" element={<Mentor />} /><Route path="projects/:id/risks" element={<Risks />} /><Route path="projects/:id/documents" element={<Documents />} /><Route path="projects/:id/adjust-plan" element={<PlanAdjustments />} /><Route path="faculty" element={<ProtectedRoute roles={['faculty','admin']}><Faculty /></ProtectedRoute>} /><Route path="faculty/projects/:id" element={<ProtectedRoute roles={['faculty','admin']}><FacultyProject /></ProtectedRoute>} /><Route path="admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes>
+  return <Routes><Route path="/login" element={<Login />} /><Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}><Route index element={<Home />} /><Route path="skill-assessment" element={<ProtectedRoute roles={['student']}><SkillAssessment /></ProtectedRoute>} /><Route path="profile" element={<Profile />} /><Route path="projects/new" element={<NewProject />} /><Route path="projects/:id" element={<Project />} /><Route path="projects/:id/mentor" element={<Mentor />} /><Route path="projects/:id/risks" element={<Risks />} /><Route path="projects/:id/documents" element={<Documents />} /><Route path="projects/:id/adjust-plan" element={<PlanAdjustments />} /><Route path="faculty" element={<ProtectedRoute roles={['faculty','admin']}><Faculty /></ProtectedRoute>} /><Route path="faculty/projects/:id" element={<ProtectedRoute roles={['faculty','admin']}><FacultyProject /></ProtectedRoute>} /><Route path="admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes>
 }
